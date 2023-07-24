@@ -1,0 +1,32 @@
+{
+  "name": "cli-demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "script": {
+    "postpublish": "git push",
+    "postversion": "npm publish"
+  },
+  "bin": {
+    "wsh": "bin/wsh.js",
+    "wsh-create": "bin/wsh-create.js"
+  },
+  "files": [
+    "lib",
+    "bin"
+  ],
+  "dependencies": {
+    "chalk": "^4.0.0",
+    "commander": "^5.0.0",
+    "download-git-repo": "^3.0.2",
+    "handlebars": "^4.7.6",
+    "inquirer": "^7.1.0",
+    "metalsmith": "^2.3.0",
+    "ora": "^4.0.3",
+    "request": "^2.88.2",
+    "semver": "^7.3.2",
+    "user-home": "^2.0.0"
+  },
+  "author": "",
+  "license": "ISC"
+}
