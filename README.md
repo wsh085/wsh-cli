@@ -1,2 +1,2 @@
-# wsh-cli
+# weishh-cli
 个人脚手架

@@ -7,8 +7,8 @@ const home = require("user-home");
 const exists = require("fs").existsSync;
 const inquirer = require("inquirer");
 const ora = require("ora");
-const rm = require("rimraf").sync;
-const download = require("download-git-repo");
+const fs = require("fs-extra");
+const gitClone = require("git-clone/promise");
 
 const checkVersion = require("../lib/check-version");
 const generate = require("../lib/generate");
@@ -22,13 +22,21 @@ const rawName = program.args[0];
 // true则表示没写或者'.'，即在当前目录下构建
 const inPlace = !rawName || rawName === ".";
 // 如果是在当前目录下构建，则创建项目名为当前目录名；如果不是，创建项目名则为 rawName
-// process.cwd() = /Users/wsh/learn/cli-demo
+// process.cwd() = /Users/weishh/learn/cli-demo
 const projectName = inPlace ? path.relative("../", process.cwd()) : rawName;
 // 创建项目目录的绝对路径
 const projectPath = path.resolve(projectName || ".");
 // 远程模板下载到本地的路径
-// downloadPath = /Users/wsh/.vue-pro-template
-const downloadPath = path.join(home, ".vue-pro-template");
+// downloadPath = /Users/weishh/project-template
+const downloadPath = path.join(home, "project-template");
+
+/**
+  rawName =  test
+  inPlace =  false
+  projectName =  test
+  projectPath =  /Users/wsh/wsh-github/weishh-cli/test
+  downloadPath =  /Users/wsh/project-template
+ */
 
 const spinner = ora();
 
@@ -51,7 +59,7 @@ if (inPlace || exists(projectPath)) {
     .then((answers) => {
       if (answers.ok) {
         console.log(chalk.yellow("Deleting old project ..."));
-        if (exists(projectPath)) rm(projectPath);
+        if (exists(projectPath)) fs.removeSync(projectPath);
         run();
       }
     })
@@ -63,28 +71,29 @@ if (inPlace || exists(projectPath)) {
 function run() {
   // 先收集用户的输入，再下载模板
   ask().then((answers) => {
-    if (exists(downloadPath)) rm(downloadPath);
+    if (exists(downloadPath)) fs.removeSync(downloadPath);
     checkVersion(() => {
-      // 模板的 github 地址为 https://github.com/pandly/vue-pro-template
-      const officalTemplate = "pandly/vue-pro-template";
-      downloadAndGenerate(officalTemplate, answers);
+      // 模板的 github 地址为 https://github.com/wsh085/react-project-template
+      const templateURL = "https://github.com/wsh085/react-project-template";
+      downloadAndGenerate(templateURL, answers);
     });
   });
 }
 
-function downloadAndGenerate(officialTemplate, answers) {
+function downloadAndGenerate(templateGitUrl, answers) {
   spinner.start("Downloading template ...");
-  download(officialTemplate, downloadPath, { clone: false }, (err) => {
-    if (err) {
-      spinner.fail(
-        "Failed to download repo " +
-          officialTemplate +
-          ": " +
-          err.message.trim()
-      );
-    } else {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await gitClone(templateGitUrl, `${downloadPath}/${answers.name}`, {
+        checkout: "master",
+        shallow: true,
+      });
       spinner.succeed("Successful download template!");
       generate(projectName, downloadPath, projectPath, answers);
+    } catch (error) {
+      spinner.fail(
+        "Failed to download repo " + templateGitUrl + ": " + err.message.trim()
+      );
     }
   });
 }
